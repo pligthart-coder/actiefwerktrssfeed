@@ -1,9 +1,8 @@
 /**
- * Standalone Node.js HTTP server for the Carerix RSS Feed.
+ * Actief Werkt! RSS Feed Server
  *
- * Wraps the same logic as api/rss.js but runs as a plain HTTP server
- * without any Vercel dependency. Suitable for VPS, Docker, or any
- * Node.js hosting environment.
+ * Node.js HTTP server that queries the Carerix GraphQL API for active
+ * job publications and serves them as an RSS 0.91 XML feed.
  *
  * Usage:
  *   cp .env.example .env   # fill in your credentials
