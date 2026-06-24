@@ -1,13 +1,14 @@
 # Actief Werkt! RSS Feed
 
-RSS 0.91 feed that queries the [Carerix GraphQL API](https://api.carerix.io/graphql/v1/graphql) for active job publications and outputs them as XML.
+RSS 0.91 feed server that queries the [Carerix GraphQL API](https://api.carerix.io/graphql/v1/graphql) for active job publications and outputs them as XML.
 
 ## What it does
 
-- Fetches all publications with medium **"web"** and **"betaald"**
+- Fetches publications from Carerix with medium **"web"** and/or **"betaald"**
 - Filters by `publicationStart <= today` and `publicationEnd > today` (or empty)
 - Returns **RSS 0.91 XML** with all vacancy details (title, company, location, salary, description, education, etc.)
-- Caches the feed in memory for 1 hour
+- Caches the feed in memory for 1 hour (configurable)
+- Supports filtering by medium via query parameter
 
 ## Prerequisites
 
@@ -17,42 +18,28 @@ RSS 0.91 feed that queries the [Carerix GraphQL API](https://api.carerix.io/grap
 ## Quick Start
 
 ```bash
+# 1. Clone the repository
+git clone https://github.com/pligthart-coder/actiefwerktrssfeed.git
+cd actiefwerktrssfeed
+
+# 2. Configure credentials
 cp .env.example .env
 # Edit .env with your Carerix credentials
 
+# 3. Start the server
 node server.js
-# → http://localhost:3000/api/rss
 ```
 
-## Deployment Options
+The feed is available at `http://localhost:3000/api/rss`.
 
-### Vercel (serverless)
+## Endpoints
 
-The `api/rss.js` and `vercel.json` files are ready for Vercel deployment. Add your 3 environment variables in the Vercel dashboard and deploy.
-
-### Docker
-
-```bash
-docker build -t actiefwerkt-rss .
-docker run -d -p 3000:3000 --env-file .env actiefwerkt-rss
-```
-
-### Docker Compose
-
-```bash
-cp .env.example .env    # fill in credentials
-docker compose up -d
-```
-
-### VPS / Bare Metal
-
-```bash
-npm install -g pm2
-pm2 start server.js --name actiefwerkt-rss
-pm2 save && pm2 startup
-```
-
-See [INSTALL.md](INSTALL.md) for detailed instructions including systemd service setup and Nginx reverse proxy with SSL.
+| Path | Description |
+|---|---|
+| `/api/rss` | Full RSS feed (all publications) |
+| `/api/rss?medium=web` | Only publications with medium "web" |
+| `/api/rss?medium=betaald` | Only publications with medium "betaald" |
+| `/health` | JSON health check |
 
 ## Configuration
 
@@ -62,15 +49,35 @@ See [INSTALL.md](INSTALL.md) for detailed instructions including systemd service
 | `CARERIX_CLIENT_SECRET` | Yes | — | OAuth2 client secret |
 | `CARERIX_TOKEN_ENDPOINT` | Yes | — | OAuth2 token URL |
 | `PORT` | No | `3000` | HTTP port |
-| `CACHE_TTL_SECONDS` | No | `3600` | Cache lifetime (seconds) |
+| `CACHE_TTL_SECONDS` | No | `3600` | Cache lifetime in seconds |
 
-## Endpoints
+## Deployment Options
 
-| Path | Description |
-|---|---|
-| `/api/rss` | RSS 0.91 XML feed |
-| `/` | Same as `/api/rss` |
-| `/health` | JSON health check |
+### Docker (recommended)
+
+```bash
+cp .env.example .env    # fill in credentials
+docker compose up -d
+```
+
+### Docker (manual)
+
+```bash
+docker build -t actiefwerkt-rss .
+docker run -d --restart unless-stopped -p 3000:3000 --env-file .env actiefwerkt-rss
+```
+
+### PM2 (process manager)
+
+```bash
+npm install -g pm2
+pm2 start server.js --name actiefwerkt-rss
+pm2 save && pm2 startup
+```
+
+### systemd
+
+See [INSTALL.md](INSTALL.md) for detailed systemd service setup and Nginx reverse proxy with SSL.
 
 ## License
 

@@ -1,90 +1,53 @@
-# Carerix RSS Feed — Self-Hosted Installation Guide
+# Installation Guide — Self-Hosted Deployment
 
-This guide explains how to run the Carerix RSS feed server on your own infrastructure, independent of Vercel.
+This guide explains how to deploy the Actief Werkt! RSS feed server on your own infrastructure.
 
 ## Prerequisites
 
-- **Node.js 18+** (uses built-in `fetch`, no npm dependencies)
+- **Node.js 18+** (uses built-in `fetch`, zero npm dependencies)
 - **Carerix OAuth2 credentials** (client ID, client secret, token endpoint)
-
-## Quick Start
-
-```bash
-# 1. Clone the repo
-git clone https://github.com/pligthart-coder/hd-sla-rapportage.git
-cd hd-sla-rapportage
-
-# 2. Configure credentials
-cp .env.example .env
-# Edit .env and fill in your Carerix credentials
-
-# 3. Run
-node server.js
-```
-
-The feed is available at `http://localhost:3000/api/rss`.
 
 ---
 
-## Configuration
+## Step 1: Get the code
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `CARERIX_CLIENT_ID` | Yes | — | OAuth2 client ID from Carerix |
-| `CARERIX_CLIENT_SECRET` | Yes | — | OAuth2 client secret |
-| `CARERIX_TOKEN_ENDPOINT` | Yes | — | OAuth2 token URL (e.g. `https://yourcompany.carerix.com/cxoauth2/token`) |
-| `PORT` | No | `3000` | HTTP server port |
-| `CACHE_TTL_SECONDS` | No | `3600` | How long to cache the feed in memory (seconds) |
+```bash
+git clone https://github.com/pligthart-coder/actiefwerktrssfeed.git
+cd actiefwerktrssfeed
+```
+
+## Step 2: Configure credentials
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and fill in your Carerix credentials:
+
+```env
+CARERIX_CLIENT_ID=your-client-id
+CARERIX_CLIENT_SECRET=your-client-secret
+CARERIX_TOKEN_ENDPOINT=https://yourcompany.carerix.com/cxoauth2/token
+```
+
+You can obtain these from **Carerix → Identity Access → Clients**.
+
+## Step 3: Start the server
+
+```bash
+node server.js
+```
+
+The feed will be available at `http://localhost:3000/api/rss`.
 
 ---
 
 ## Deployment Options
 
-### Option 1: Direct Node.js (VPS / bare metal)
+### Option 1: Docker Compose (recommended)
 
 ```bash
-# Install Node.js 20 LTS (Ubuntu/Debian)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# Clone and configure
-git clone https://github.com/pligthart-coder/hd-sla-rapportage.git
-cd hd-sla-rapportage
-cp .env.example .env
-nano .env  # fill in credentials
-
-# Run with pm2 (process manager — auto-restart on crash)
-npm install -g pm2
-pm2 start server.js --name carerix-rss
-pm2 save
-pm2 startup  # auto-start on boot
-```
-
-### Option 2: Docker
-
-```bash
-# Build the image
-docker build -t carerix-rss-feed .
-
-# Run with credentials
-docker run -d \
-  --name carerix-rss-feed \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  -e CARERIX_CLIENT_ID=your-client-id \
-  -e CARERIX_CLIENT_SECRET=your-client-secret \
-  -e CARERIX_TOKEN_ENDPOINT=https://yourcompany.carerix.com/cxoauth2/token \
-  carerix-rss-feed
-```
-
-### Option 3: Docker Compose
-
-```bash
-# Configure credentials
-cp .env.example .env
-nano .env  # fill in credentials
-
-# Start
+cp .env.example .env    # fill in credentials
 docker compose up -d
 
 # View logs
@@ -94,20 +57,49 @@ docker compose logs -f
 docker compose down
 ```
 
-### Option 4: systemd Service (Linux)
+### Option 2: Docker (manual)
 
-Create `/etc/systemd/system/carerix-rss.service`:
+```bash
+# Build
+docker build -t actiefwerkt-rss .
+
+# Run
+docker run -d \
+  --name actiefwerkt-rss \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  --env-file .env \
+  actiefwerkt-rss
+```
+
+### Option 3: PM2 (process manager)
+
+```bash
+# Install PM2
+npm install -g pm2
+
+# Start the server
+pm2 start server.js --name actiefwerkt-rss
+
+# Save and auto-start on boot
+pm2 save
+pm2 startup
+```
+
+### Option 4: systemd service (Linux)
+
+Create `/etc/systemd/system/actiefwerkt-rss.service`:
 
 ```ini
 [Unit]
-Description=Carerix RSS Feed Server
+Description=Actief Werkt RSS Feed Server
 After=network.target
 
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/opt/carerix-rss-feed
-EnvironmentFile=/opt/carerix-rss-feed/.env
+WorkingDirectory=/opt/actiefwerkt-rss
+EnvironmentFile=/opt/actiefwerkt-rss/.env
 ExecStart=/usr/bin/node server.js
 Restart=always
 RestartSec=10
@@ -119,27 +111,27 @@ WantedBy=multi-user.target
 Then:
 
 ```bash
-# Copy files
-sudo mkdir -p /opt/carerix-rss-feed
-sudo cp server.js package.json /opt/carerix-rss-feed/
-sudo cp .env.example /opt/carerix-rss-feed/.env
-sudo nano /opt/carerix-rss-feed/.env  # fill in credentials
+# Copy files to /opt
+sudo mkdir -p /opt/actiefwerkt-rss
+sudo cp server.js package.json /opt/actiefwerkt-rss/
+sudo cp .env.example /opt/actiefwerkt-rss/.env
+sudo nano /opt/actiefwerkt-rss/.env  # fill in credentials
 
 # Enable and start
 sudo systemctl daemon-reload
-sudo systemctl enable carerix-rss
-sudo systemctl start carerix-rss
+sudo systemctl enable actiefwerkt-rss
+sudo systemctl start actiefwerkt-rss
 
 # Check status
-sudo systemctl status carerix-rss
-journalctl -u carerix-rss -f
+sudo systemctl status actiefwerkt-rss
+journalctl -u actiefwerkt-rss -f
 ```
 
 ---
 
-## Reverse Proxy (Nginx)
+## Reverse Proxy with Nginx + SSL
 
-To serve the feed on port 80/443 with SSL:
+To serve the feed on port 80/443:
 
 ```nginx
 server {
@@ -168,14 +160,15 @@ sudo certbot --nginx -d rss.yourdomain.com
 
 | Path | Description |
 |---|---|
-| `/api/rss` | RSS 0.91 XML feed |
-| `/` | Same as `/api/rss` |
+| `/api/rss` | Full RSS feed (all publications) |
+| `/api/rss?medium=web` | Only "web" publications |
+| `/api/rss?medium=betaald` | Only "betaald" publications |
 | `/health` | JSON health check (`{"status":"ok","cached":true,"cacheAge":123}`) |
 
 ---
 
 ## Notes
 
-- **Zero npm dependencies** — the server uses only Node.js built-in modules (`http`, `fs`, `path`) and the native `fetch` API (Node 18+).
-- **In-memory cache** — the feed is cached for 1 hour by default. The first request after startup will take ~40-50 seconds while it fetches all publications from the Carerix API.
-- **The Vercel deployment** (`api/rss.js` + `vercel.json`) continues to work independently. The standalone `server.js` is an alternative for self-hosting.
+- **Zero npm dependencies** — uses only Node.js built-in modules and the native `fetch` API.
+- **In-memory cache** — the feed is cached for 1 hour by default. The first request after startup takes ~30-50 seconds while it fetches all publications from the Carerix API.
+- **Split feeds** — using `?medium=web` or `?medium=betaald` returns roughly half the data, improving response times.
