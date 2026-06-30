@@ -91,6 +91,7 @@ function buildPublicationQuery() {
           publicationStart
           publicationEnd
           titleInformation
+          titleInformationHTML
           workLocation
           additionalInfo
           introInformationHTML
@@ -409,6 +410,7 @@ function publicationToXmlItem(pub) {
 <offerInformation>${cdata(pub.offerInformationHTML || '')}</offerInformation>
 <functionContactInformation>${cdata(pub.functionContactInformationHTML || '')}</functionContactInformation>
 <applicationContactInformation>${cdata(pub.applicationContactInformationHTML || '')}</applicationContactInformation>
+<titleInformation>${cdata(pub.titleInformationHTML || pub.titleInformation || '')}</titleInformation>
 <vacancyID>${cdata(vacancy._id || '')}</vacancyID>
 <medium>${cdata(pub.toMedium?.code || '')}</medium>
 <applyUrl>${cdata(pub.applyUrl || '')}</applyUrl>
