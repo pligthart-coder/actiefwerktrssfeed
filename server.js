@@ -107,6 +107,8 @@ function buildPublicationQuery() {
             _id
             firstName
             lastName
+            emailAddress
+            businessEmailAddress
           }
           agency {
             _id
@@ -124,6 +126,13 @@ function buildPublicationQuery() {
           }
           toVacancy {
             _id
+            owner {
+              _id
+              firstName
+              lastName
+              emailAddress
+              businessEmailAddress
+            }
             titleInformation
             additionalInfo
             hoursPerWeek
@@ -344,6 +353,10 @@ function publicationToXmlItem(pub) {
   const vacancy = pub.toVacancy || {};
   const ownerName = [pub.owner?.firstName, pub.owner?.lastName].filter(Boolean).join(' ');
   const ownerId = pub.owner?._id || '';
+  const ownerEmail = pub.owner?.emailAddress || pub.owner?.businessEmailAddress || '';
+  const vacancyOwnerName = vacancy.owner ? [vacancy.owner.firstName, vacancy.owner.lastName].filter(Boolean).join(' ') : '';
+  const vacancyOwnerId = vacancy.owner?._id || '';
+  const vacancyOwnerEmail = vacancy.owner?.emailAddress || vacancy.owner?.businessEmailAddress || '';
   const agencyName = pub.agency?.name || '';
   const agencyId = pub.agency?._id || '';
   const contactName = vacancy.toContact
@@ -383,6 +396,9 @@ function publicationToXmlItem(pub) {
 <postalCode>${cdata(postalCode)}</postalCode>
 <rawTitle>${cdata(rawTitle)}</rawTitle>
 <ownerName id="${escapeXml(String(ownerId))}">${cdata(ownerName)}</ownerName>
+<ownerEmail>${cdata(ownerEmail)}</ownerEmail>
+<vacancyOwnerName id="${escapeXml(String(vacancyOwnerId))}">${cdata(vacancyOwnerName)}</vacancyOwnerName>
+<vacancyOwnerEmail>${cdata(vacancyOwnerEmail)}</vacancyOwnerEmail>
 <agency id="${escapeXml(String(agencyId))}">${cdata(agencyName)}</agency>
 <contact>${contactName ? cdata(contactName) : ''}</contact>
 <company>${cdata(companyName)}</company>
